@@ -1,3 +1,4 @@
+import ast
 import csv
 import sys
 import numpy as np
@@ -64,13 +65,16 @@ def to_dataframe(lines, **kwargs):
 
     dtypes, parse_dates, converters = {}, [], {}
     for name, chtype in zip(names, types):
-        dtype = CH2PD[chtype]
-        if dtype == 'object':
-            converters[name] = decode_escapes
-        elif dtype.startswith('datetime'):
-            parse_dates.append(name)
+        if chtype in CH2PD:
+            dtype = CH2PD[chtype]
+            if dtype == 'object':
+                converters[name] = decode_escapes
+            elif dtype.startswith('datetime'):
+                parse_dates.append(name)
+            else:
+                dtypes[name] = dtype
         else:
-            dtypes[name] = dtype
+            converters[name] = ast.literal_eval
 
     return pd.read_table(lines, header=None, names=names, dtype=dtypes,
                          parse_dates=parse_dates, converters=converters,
